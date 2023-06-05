@@ -2,17 +2,17 @@ import { faker } from "@faker-js/faker";
 import { Customer } from "../models/customer.interface";
 
 export class UserService {
-    generateFakeUsers(count: number): Customer[] {
+    generateFakeCustomers(count: number): Customer[] {
         const res = [];
 
         for (let i = 0; i < count; i++) {
-            res.push(this.generateSingleFakeUser());
+            res.push(this.generateSingleFakeCustomer());
         }
 
         return res;
     }
 
-    generateSingleFakeUser(): Customer {
+    generateSingleFakeCustomer(): Customer {
         return {
             address: {
                 city: faker.location.city(),
@@ -27,5 +27,16 @@ export class UserService {
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName()
         };
+    }
+
+    anonymiseCustomer(customer: Customer): Customer {
+        customer.address.line1 = faker.string.alpha(8);
+        customer.address.line2 = faker.string.alpha(8);
+        customer.address.postcode = faker.string.alpha(8);
+        customer.firstName = faker.string.alpha(8);
+        customer.lastName = faker.string.alpha(8);
+        customer.email = faker.string.alpha(8) + customer.email.split('@')[1];
+
+        return customer;
     }
 }
