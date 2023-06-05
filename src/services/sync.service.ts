@@ -32,13 +32,18 @@ export class SyncService {
 
         await migration.save();
 
-        let customers = await CustomerModel.find(filter, null, { lean: true }) as Customer[];
+        const customers = CustomerModel.find(filter, null, { lean: true });
+        let i = 0;
 
-        let anonymisedCustomers = customers.map(c => userService.anonymiseCustomer(c));
+        for await (const customer of customers) {
+            let customerAnon = userService.anonymiseCustomer(customer as Customer);
+            await CustomerAnonymised.create(customerAnon);
+            i++;
+        }
 
-        CustomerAnonymised.insertMany(anonymisedCustomers);
 
-        migration.inserted = anonymisedCustomers.length;
+
+        migration.inserted = i;
         migration.status = MigrationStatus.Completed;
 
         await migration.save();
