@@ -9,7 +9,7 @@ dbConnect().then(() => {
     setInterval(async () => {
         const customerCount = Math.round((Math.random() * 11) % 11);
         try {
-            let customers = userService.generateFakeUsers(customerCount);
+            let customers = userService.generateFakeCustomers(customerCount);
             await Customer.insertMany(customers);
         }
         catch (e) {
