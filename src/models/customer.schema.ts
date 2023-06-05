@@ -1,5 +1,3 @@
-import { Customer } from "./customer.interface";
-
 export const customerSchemaDescription = {
     firstName: String,
     lastName: String,

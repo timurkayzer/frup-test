@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start-app": "node dist/app.js",
-    "start-sync": "node dist/sync.js"
+    "start-sync": "node dist/sync.js",
+    "start-sync-full": "node dist/sync.js --full-reindex"
   },
   "keywords": [],
   "author": "",
