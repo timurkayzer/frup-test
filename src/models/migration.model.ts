@@ -7,7 +7,8 @@ export enum MigrationType {
 
 export enum MigrationStatus {
     Completed = "completed",
-    Working = "working"
+    Working = "working",
+    Exited = "exited"
 }
 
 export const migrationSchema = new mongoose.Schema({
