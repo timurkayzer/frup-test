@@ -6,12 +6,8 @@ import { Migration, MigrationStatus, MigrationType } from "../models/migration.m
 import { userService } from "./user.service";
 
 export class SyncService {
-    async beginSingleMigration() {
-        const lastMigration = await Migration.findOne({
-            status: MigrationStatus.Completed
-        }, null, {
-            sort: '-createdAt',
-        });
+    async beginSingleMigration(startDate?: Date) {
+
 
         const migration = new Migration({
             type: MigrationType.Single,
@@ -22,12 +18,28 @@ export class SyncService {
 
         const filter: FilterQuery<Customer> = {};
 
-        if (lastMigration) {
-            migration.startDate = lastMigration.endDate;
+        if (startDate) {
             filter.createdAt = {
-                $lt: migration.endDate,
-                $gte: migration.startDate
+                $gte: startDate
             };
+        }
+        else {
+
+            const lastMigration = await Migration.findOne({
+                status: MigrationStatus.Completed
+            }, null, {
+                sort: '-createdAt',
+            });
+
+            if (lastMigration) {
+                migration.startDate = lastMigration.endDate;
+
+                filter.createdAt = {
+                    $lt: migration.endDate,
+                    $gte: migration.startDate
+                };
+            }
+
         }
 
         await migration.save();
@@ -50,7 +62,52 @@ export class SyncService {
     }
 
     async beginContinuousMigration() {
+        const lastMigration = await Migration.findOne({
+            status: MigrationStatus.Exited,
+            type: MigrationType.Continuous
+        }, null, { sort: "-endDate" });
 
+        if (lastMigration) {
+            // race up to the current moment
+            this.beginSingleMigration(lastMigration.endDate)
+                .then(() => console.log("Initial migration completed"))
+                .catch((e) => console.error("Initial migration failed:", e?.toString()));
+        }
+        // do not wait, start listening to collection
+        const migration = new Migration({
+            type: MigrationType.Continuous,
+            createdAt: new Date(),
+            startDate: new Date(),
+            endDate: new Date(),
+            status: MigrationStatus.Working
+        });
+
+        await migration.save();
+        console.log("Listening to changes");
+        CustomerModel.watch().on('change', async (event) => {
+            console.log(event);
+        });
+
+        const customers: Customer[] = [];
+
+        setInterval(async () => {
+            if (customers.length) {
+                const customersBatch = customers.splice(0, 1000);
+                migration.endDate = customersBatch.at(-1)?.createdAt;
+                migration.status = MigrationStatus.Completed;
+
+                await Promise.all([
+                    CustomerAnonymised.insertMany(customersBatch),
+                    migration.save()
+                ]);
+            }
+
+        }, 1000);
+
+        process.on("SIGTERM", async () => {
+            migration.status = MigrationStatus.Exited;
+            await migration.save();
+        });
     }
 }
 
