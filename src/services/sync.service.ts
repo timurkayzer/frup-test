@@ -1,4 +1,4 @@
-import { FilterQuery } from "mongoose";
+import mongoose, { FilterQuery } from "mongoose";
 import { Customer } from "../models/customer.interface";
 import { Customer as CustomerModel } from "../models/customer.model";
 import { CustomerAnonymised } from "../models/customers-anonymised.model";
@@ -7,8 +7,6 @@ import { userService } from "./user.service";
 
 export class SyncService {
     async beginSingleMigration(startDate?: Date) {
-
-
         const migration = new Migration({
             type: MigrationType.Single,
             createdAt: new Date(),
@@ -84,9 +82,10 @@ export class SyncService {
 
         await migration.save();
         console.log("Listening to changes");
-        CustomerModel.watch().on('change', async (event) => {
+        CustomerModel.watch().on('change', (event) => {
             console.log(event);
         });
+
 
         const customers: Customer[] = [];
 

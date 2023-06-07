@@ -35,7 +35,7 @@ export class UserService {
         customer.address.postcode = faker.string.alpha(8);
         customer.firstName = faker.string.alpha(8);
         customer.lastName = faker.string.alpha(8);
-        customer.email = faker.string.alpha(8) + customer.email.split('@')[1];
+        customer.email = `${faker.string.alpha(8)}@${customer.email.split('@')[1]}`;
 
         return customer;
     }
