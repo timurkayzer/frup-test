@@ -3,19 +3,18 @@
 import { dbConnect } from "./db-connect";
 import { Customer } from "./models/customer.model";
 import { UserService } from "./services/user.service";
-const userService = new UserService;
+const userService = new UserService();
 
-dbConnect().then(() => {
+dbConnect()
+  .then(() => {
     setInterval(async () => {
-        const customerCount = Math.round((Math.random() * 11) % 11);
-        try {
-            let customers = userService.generateFakeCustomers(customerCount);
-            await Customer.insertMany(customers);
-        }
-        catch (e) {
-            console.error(e?.toString());
-        }
+      const customerCount = Math.round((Math.random() * 11) % 11);
+      try {
+        let customers = userService.generateFakeCustomers(customerCount);
+        await Customer.insertMany(customers);
+      } catch (e) {
+        console.error(e?.toString());
+      }
     }, 200);
-})
-    .catch(e => console.error(e?.toString()));
-
+  })
+  .catch((e) => console.error(e?.toString()));

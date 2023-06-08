@@ -18,10 +18,10 @@
     "dotenv": "^16.1.3",
     "getenv": "^1.0.0",
     "mongoose": "^7.2.2",
-    "prettier": "^2.8.8",
     "typescript": "^5.1.3"
   },
   "devDependencies": {
-    "@types/getenv": "^1.0.0"
+    "@types/getenv": "^1.0.0",
+    "prettier": "^2.8.8"
   }
 }
