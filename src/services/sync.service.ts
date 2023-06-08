@@ -82,8 +82,10 @@ export class SyncService {
 
         await migration.save();
         console.log("Listening to changes");
-        CustomerModel.watch().on('change', (event) => {
-            console.log(event);
+        CustomerModel.watch().on('change', (event: { operationType: string, fullDocument: Customer; }) => {
+            if (event.operationType === 'insert') {
+                customers.push(event.fullDocument);
+            }
         });
 
 
