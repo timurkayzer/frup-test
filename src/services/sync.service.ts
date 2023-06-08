@@ -63,14 +63,9 @@ export class SyncService {
   }
 
   async beginContinuousMigration() {
-    const lastMigration = await Migration.findOne(
-      {
-        status: MigrationStatus.Exited,
-        type: MigrationType.Continuous,
-      },
-      null,
-      { sort: "-endDate" }
-    );
+    const lastMigration = await Migration.findOne({}, null, {
+      sort: "-endDate",
+    });
 
     if (lastMigration) {
       // race up to the current moment
@@ -80,6 +75,7 @@ export class SyncService {
           console.error("Initial migration failed:", e?.toString())
         );
     }
+
     // do not wait, start listening to collection
     const migration = new Migration({
       type: MigrationType.Continuous,
@@ -90,6 +86,7 @@ export class SyncService {
     });
 
     await migration.save();
+
     console.log("Listening to changes");
     CustomerModel.watch().on(
       "change",
@@ -115,9 +112,9 @@ export class SyncService {
       }
     }, 1000);
 
-    process.on("SIGTERM", async () => {
+    process.on("exit", async () => {
       migration.status = MigrationStatus.Exited;
-      await migration.save();
+      migration.save();
     });
   }
 }
