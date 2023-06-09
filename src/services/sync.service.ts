@@ -1,4 +1,4 @@
-import mongoose, { FilterQuery } from "mongoose";
+import { FilterQuery } from "mongoose";
 import { Customer } from "../models/customer.interface";
 import { Customer as CustomerModel } from "../models/customer.model";
 import { CustomerAnonymised } from "../models/customers-anonymised.model";
@@ -20,10 +20,12 @@ export class SyncService {
 
     const filter: FilterQuery<Customer> = {};
 
+    // in case of continuing previous migration
     if (startDate) {
       filter.createdAt = {
         $gte: startDate,
       };
+      // new full migration
     } else {
       const lastMigration = await Migration.findOne(
         {
@@ -35,6 +37,7 @@ export class SyncService {
         }
       );
 
+      // create new migration after last completed
       if (lastMigration) {
         migration.startDate = lastMigration.endDate;
 
@@ -45,20 +48,38 @@ export class SyncService {
       }
     }
 
+    // sync customers by 1000
+    const limit = 1000;
+    let i = 1;
+    migration.inserted = 0;
     await migration.save();
 
-    const customers = CustomerModel.find(filter, null, { lean: true });
-    let i = 0;
+    let customers: Customer[] = await CustomerModel.find(filter, null, {
+      lean: true,
+      limit,
+    });
 
-    for await (const customer of customers) {
-      let customerAnon = userService.anonymiseCustomer(customer as Customer);
-      await CustomerAnonymised.create(customerAnon);
-      i++;
+    try {
+      while (customers.length) {
+        migration.inserted += customers.length;
+        customers = customers.map((c) => userService.anonymiseCustomer(c));
+        await CustomerAnonymised.insertMany(customers);
+        console.log(`Inserted ${customers.length} customers`);
+        customers = await CustomerModel.find(filter, null, {
+          lean: true,
+          limit,
+          skip: i * limit,
+        });
+        i++;
+      }
+    } catch (e) {
+      console.error("Error while inserting customers", e?.toString());
+      migration.status = MigrationStatus.Exited;
+      await migration.save();
+      return;
     }
 
-    migration.inserted = i;
     migration.status = MigrationStatus.Completed;
-
     await migration.save();
   }
 
@@ -109,6 +130,7 @@ export class SyncService {
           CustomerAnonymised.insertMany(customersBatch),
           migration.save(),
         ]);
+        console.log(`Inserted ${customersBatch.length} customers`);
       }
     }, 1000);
 

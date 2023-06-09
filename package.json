@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "format": "prettier --write .",
     "start-app": "node dist/app.js",
     "start-sync": "node dist/sync.js",
     "start-sync-full": "node dist/sync.js --full-reindex"

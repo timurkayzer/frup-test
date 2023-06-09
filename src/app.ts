@@ -12,6 +12,7 @@ dbConnect()
       try {
         let customers = userService.generateFakeCustomers(customerCount);
         await Customer.insertMany(customers);
+        console.log(`Inserted ${customers.length} customers`);
       } catch (e) {
         console.error(e?.toString());
       }
