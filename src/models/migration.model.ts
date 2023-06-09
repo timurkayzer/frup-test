@@ -13,11 +13,19 @@ export enum MigrationStatus {
 
 export const migrationSchema = new mongoose.Schema({
   type: String, // MigrationType
-  createdAt: Date,
-  startDate: Date,
-  endDate: Date,
+  startDate: {
+    type: Date,
+    index: true
+  },
+  endDate: {
+    type: Date,
+    index: true
+  },
   inserted: Number,
   status: String, // MigrationStatus
-});
+}, { timestamps: true });
+
+migrationSchema.index({ 'createdAt': 1 });
+
 
 export const Migration = mongoose.model("migrations", migrationSchema);

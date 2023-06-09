@@ -8,15 +8,11 @@ import {
   MigrationType,
 } from "../models/migration.model";
 import { userService } from "./user.service";
+import { migrationService } from "./migration.service";
 
 export class SyncService {
   async beginSingleMigration(startDate?: Date) {
-    const migration = new Migration({
-      type: MigrationType.Single,
-      createdAt: new Date(),
-      endDate: new Date(),
-      status: MigrationStatus.Working,
-    });
+    const migration = migrationService.createMigration(MigrationType.Single);
 
     const filter: FilterQuery<Customer> = {};
 
@@ -27,15 +23,7 @@ export class SyncService {
       };
       // new full migration
     } else {
-      const lastMigration = await Migration.findOne(
-        {
-          status: MigrationStatus.Completed,
-        },
-        null,
-        {
-          sort: "-createdAt",
-        }
-      );
+      const lastMigration = await migrationService.getLastMigration();
 
       // create new migration after last completed
       if (lastMigration) {
@@ -98,20 +86,13 @@ export class SyncService {
     }
 
     // do not wait, start listening to collection
-    const migration = new Migration({
-      type: MigrationType.Continuous,
-      createdAt: new Date(),
-      startDate: new Date(),
-      endDate: new Date(),
-      status: MigrationStatus.Working,
-    });
-
+    const migration = migrationService.createMigration(MigrationType.Continuous);
     await migration.save();
 
     console.log("Listening to changes");
     CustomerModel.watch().on(
       "change",
-      (event: { operationType: string; fullDocument: Customer }) => {
+      (event: { operationType: string; fullDocument: Customer; }) => {
         if (event.operationType === "insert") {
           customers.push(event.fullDocument);
         }

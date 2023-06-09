@@ -9,6 +9,5 @@ export const customerSchemaDescription = {
     city: String,
     state: String,
     country: String,
-  },
-  createdAt: Date,
+  }
 };
